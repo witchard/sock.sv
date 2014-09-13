@@ -19,10 +19,10 @@ import "DPI-C" function int sock_init();
 import "DPI-C" function void sock_shutdown();
 
 // Open a connection to an endpoint
-//   hostname - The host to connect to / IP address
-//   service  - The port to connect to / service name (e.g. http)
+//   uri - Where to connect:
+//           tcp://hostname:port - TCP Socket
 // Returns a handle to be used with other functions, or null on error
-import "DPI-C" function chandle sock_open(input string hostname, input string service);
+import "DPI-C" function chandle sock_open(input string uri);
 
 // Close a connection to an endpoint
 //   handle - Handle returned from sock_open
@@ -54,7 +54,7 @@ initial begin
 	end 
 
 	// Connect
-	h = sock_open("localhost", "1234");
+	h = sock_open("tcp://localhost:1234");
 	if(h == null) begin
 		$error("Aww shucks couldn't connect");
 		sock_shutdown();

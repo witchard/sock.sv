@@ -44,7 +44,20 @@ void sock_shutdown() {
 #endif /* _WIN32 */
 }
 
-void* sock_open(const char* hostname, const char* service) {
+void* tcp_sock_open(const char* name) {
+    // Extract hostname / port
+    char* string = strdup(name);
+    if(!string)
+        return NULL;
+    char* colon = strchr(string, ':');
+    if(!colon) {
+        free(string);
+        return NULL;
+    }
+    *colon = '\0'; // Split string into hostname and port
+    const char* hostname = string;
+    const char* port = colon + 1;
+
     int status;
     struct addrinfo hints, *res, *p;
     
@@ -54,10 +67,12 @@ void* sock_open(const char* hostname, const char* service) {
     hints.ai_socktype = SOCK_STREAM;
 
     // Look up the host
-    if ((status = getaddrinfo(hostname, service, &hints, &res)) != 0) {
+    if ((status = getaddrinfo(hostname, port, &hints, &res)) != 0) {
+        free(string);
         printf("Error getting host info: %s\n", gai_strerror(status));
         return NULL;
     }
+    free(string);
 
     // Try and connect
     int sock = -1;
@@ -87,6 +102,16 @@ void* sock_open(const char* hostname, const char* service) {
     struct handle* h = malloc(sizeof(struct handle));
     h->filep = filep;
     return h;
+}
+
+void* sock_open(const char* uri) {
+    size_t len = strlen(uri);
+    if( len > 6 && strncmp("tcp://", uri, 6) == 0 ) {
+        return tcp_sock_open(uri+6);
+    }
+
+    printf("Invalid URI\n");
+    return NULL;
 }
 
 void sock_close(void* handle) {

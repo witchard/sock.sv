@@ -7,6 +7,8 @@
 // Need to say we are on recent enough windows to get getaddrinfo...
 // http://stackoverflow.com/questions/12765743/getaddrinfo-on-win32
 #define _WIN32_WINNT 0x0501
+#define popen _popen 
+// ^^ TODO Is this necessary
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
@@ -24,6 +26,7 @@
 struct handle {
     FILE* filep;
     char buffer[BUFFER_SIZE];
+    char is_proc;
 };
 
 int sock_init() {
@@ -100,7 +103,25 @@ void* tcp_sock_open(const char* name) {
     }
 
     struct handle* h = malloc(sizeof(struct handle));
+    if(!h) {
+        fclose(filep);
+        return NULL;
+    }
     h->filep = filep;
+    h->is_proc = 0;
+    return h;
+}
+
+void* proc_sock_open(const char* cmd) {
+    FILE* filep = popen(cmd, "rw");
+
+    struct handle* h = malloc(sizeof(struct handle));
+    if(!h) {
+        pclose(filep);
+        return NULL;
+    }
+    h->filep = filep;
+    h->is_proc = 1;
     return h;
 }
 
@@ -108,6 +129,8 @@ void* sock_open(const char* uri) {
     size_t len = strlen(uri);
     if( len > 6 && strncmp("tcp://", uri, 6) == 0 ) {
         return tcp_sock_open(uri+6);
+    } else if( len > 7 && strncmp("proc://", uri, 7) == 0 ) {
+        return proc_sock_open(uri+7);
     }
 
     printf("Invalid URI\n");
@@ -119,7 +142,10 @@ void sock_close(void* handle) {
         return;
     
     struct handle* h = handle;
-    fclose(h->filep);
+    if(h->is_proc)
+        pclose(h->filep);
+    else
+        fclose(h->filep);
     free(h);
 }
 

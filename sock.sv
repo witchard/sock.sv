@@ -21,6 +21,7 @@ import "DPI-C" function void sock_shutdown();
 // Open a connection to an endpoint
 //   uri - Where to connect:
 //           tcp://hostname:port - TCP Socket
+//           pipe://<command to run> - Execute a program and rw into it
 // Returns a handle to be used with other functions, or null on error
 import "DPI-C" function chandle sock_open(input string uri);
 
@@ -43,7 +44,9 @@ import "DPI-C" function string sock_readln(input chandle handle);
 
 
 
-// Example usage - sends / receives some data to/from localhost port 1234
+// Example usage:
+//   Sends / receives some data to/from localhost port 1234
+//   Does the same again using proc with nc
 initial begin
 	chandle h;
 	
@@ -53,7 +56,7 @@ initial begin
 		$stop();
 	end 
 
-	// Connect
+	// Connect TCP
 	h = sock_open("tcp://localhost:1234");
 	if(h == null) begin
 		$error("Aww shucks couldn't connect");
@@ -66,8 +69,27 @@ initial begin
 		$error("Darn it the write failed");
 	$write(sock_readln(h));
 
-	// Done
+	// Done TCP
 	sock_close(h);
+
+	// Connect proc
+	h = sock_open("proc://nc localhost 1234");
+	if(h == null) begin
+		$error("Aww shucks couldn't connect");
+		sock_shutdown();
+		$stop();
+	end
+	$display("opened proc...");
+
+	// Send / receive
+	if(!sock_writeln(h, "Howdy partner!"))
+		$error("Darn it the write failed");
+	$write(sock_readln(h));
+
+	// Done proc
+	sock_close(h);
+
+	// Finished
 	sock_shutdown();
 end
 

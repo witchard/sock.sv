@@ -62,9 +62,10 @@ initial begin
 	end 
 
 	// Send / receive
+	/*
 	if(!sock_writeln(h, "Howdy partner!"))
 		$error("Darn it the write failed");
-	$write(sock_readln(h));
+	$write(sock_readln(h));*/
 
 	// Done
 	sock_close(h);

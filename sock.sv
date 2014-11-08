@@ -35,7 +35,8 @@ import "DPI-C" function void sock_close(input chandle handle);
 // Returns 1 on success, 0 on error
 import "DPI-C" function int sock_writeln(input chandle handle, input string data);
 
-// Read a line from handle - does not remove new line
+// Read a line from handle - removes newline
+// (note does not remove carridge return if present)
 //   handle - Handle returned from sock_open
 // Returns the line, or empty string on error / EOF
 // Note: we have a 1k buffer, lines longer than this will be split up
@@ -67,7 +68,7 @@ initial begin
 		sock_shutdown();
 		$stop();
 	end
-	//$write(sock_readln(h));
+	$display(sock_readln(h));
 
 	// Done
 	sock_close(h);

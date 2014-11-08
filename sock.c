@@ -30,7 +30,10 @@ typedef int SOCKET;
 #define BUFFER_SIZE 1024*1024
 struct handle {
     SOCKET sock;
-    char buffer[BUFFER_SIZE];
+    char wbuf[BUFFER_SIZE];
+    char rbuf[BUFFER_SIZE+1];
+    size_t roff; // Read pointer
+    size_t eoff; // Read end
 };
 
 int sock_init() {
@@ -52,8 +55,12 @@ void sock_shutdown() {
 
 struct handle* init_struct(SOCKET sock) {
     struct handle* h = malloc(sizeof(struct handle));
-    if(h)
+    if(h) {
         h->sock = sock;
+        h->roff = 0;
+        h->eoff = 0;
+        h->rbuf[BUFFER_SIZE] = '\0'; // Overflow protection for long strings
+    }
     return h;
 }
 
@@ -135,27 +142,55 @@ int sock_writeln(void* handle, const char* data) {
     struct handle* h = handle;
 
     // Create output string (replace null termination with newline)
-    memcpy(h->buffer, data, len);
-    h->buffer[len] = '\n';
+    memcpy(h->wbuf, data, len);
+    h->wbuf[len] = '\n';
     len++;
 
     // Write
     int ret = 0;
     int done = 0;
     while(ret != -1 && done != len) {
-        ret = send(h->sock, h->buffer+done, len-done, NULL);
+        ret = send(h->sock, h->wbuf+done, len-done, 0);
         done += ret;
     }
     return ret == -1 ? 0 : 1; // Success if ret != -1
 }
 
 const char* sock_readln(void* handle) {
+    // Validate input
     if(!handle) 
-        return 0;
-    
+        return 0;    
     struct handle* h = handle;
-    //if(!fgets(h->buffer, BUFFER_SIZE, h->filep))
-    //    h->buffer[0] = '\0'; // Empty string on error
-    return h->buffer;
+
+    // Prepare read - move down any spare data from last time
+    if( h->roff > h->eoff ) {
+        memmove(h->rbuf, h->rbuf + h->eoff, h->roff - h->eoff);
+        h->roff -= h->eoff;
+    } else {
+        h->roff = 0;
+    }
+
+    // Read
+    int ret = 0;
+    char* end = memchr(h->rbuf, '\n', h->roff);
+    while(ret != -1 && h->roff != BUFFER_SIZE && end == NULL) {
+        ret = recv(h->sock, h->rbuf + h->roff, BUFFER_SIZE - h->roff, 0);
+        if( ret != -1 )
+            end = memchr(h->rbuf + h->roff, '\n', ret); // Search for \n
+        h->roff += ret;
+    }
+
+    // Tidy up string
+    if( ret == -1 ) {
+        h->rbuf[0] = '\0'; // Empty string on error
+    }
+    if( end ) {
+        *end = '\0'; // Replace newline
+        h->eoff = end + 1 - h->rbuf; // Store where we got to
+    } else {
+		h->roff = 0;
+	}
+
+    return h->rbuf;
 }
 

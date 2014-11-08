@@ -143,7 +143,7 @@ int sock_writeln(void* handle, const char* data) {
     int ret = 0;
     int done = 0;
     while(ret != -1 && done != len) {
-        ret = write(h->sock, h->buffer+done, len-done);
+        ret = send(h->sock, h->buffer+done, len-done, NULL);
         done += ret;
     }
     return ret == -1 ? 0 : 1; // Success if ret != -1

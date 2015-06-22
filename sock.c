@@ -17,6 +17,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <sys/un.h>
 
 typedef int SOCKET;
 #define INVALID_SOCKET -1
@@ -114,11 +115,45 @@ void* tcp_sock_open(const char* name) {
     return init_struct(sock);
 }
 
+#ifdef __linux__
+void* unix_sock_open(const char* name) {
+    // Build endpoint details
+    struct sockaddr_un endpoint;
+    if(strlen(name) == 0 || strlen(name) > sizeof(endpoint.sun_path))
+        return NULL; // Invalid socket name
+    endpoint.sun_family = AF_UNIX;
+    strcpy(endpoint.sun_path, name);
+    size_t len = strlen(endpoint.sun_path) + sizeof(endpoint.sun_family);
+    if(endpoint.sun_path[0] == '@')
+	endpoint.sun_path[0] = '\0'; // Use @ for abstract namespace
+
+    // Create socket
+    SOCKET sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if(sock == INVALID_SOCKET) {
+	return NULL;
+    }
+
+    // Connect
+    if( connect(sock, (struct sockaddr *)&endpoint, len) == SOCKET_ERROR) {
+	closesocket(sock);
+	return NULL;
+    }
+
+    // Create handle
+    return init_struct(sock);
+}
+#endif
+
 void* sock_open(const char* uri) {
     size_t len = strlen(uri);
     if( len > 6 && strncmp("tcp://", uri, 6) == 0 ) {
         return tcp_sock_open(uri+6);
     }
+#ifdef __linux__
+    else if( len > 7 && strncmp("unix://", uri, 7) == 0 ) {
+        return unix_sock_open(uri+7);
+    }
+#endif
 
     return NULL;
 }

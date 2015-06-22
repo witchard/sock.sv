@@ -20,7 +20,9 @@ import "DPI-C" function void sock_shutdown();
 
 // Open a connection to an endpoint
 //   uri - Where to connect:
-//           tcp://hostname:port - TCP Socket
+//           tcp://hostname:port - TCP Socket.
+//           unix://socketname   - Unix Domain Socket (linux only).
+//                                 Prefix with @ for abstract namespace.
 // Returns a handle to be used with other functions, or null on error
 import "DPI-C" function chandle sock_open(input string uri);
 
@@ -56,6 +58,7 @@ initial begin
 
 	// Connect
 	h = sock_open("tcp://localhost:1234");
+	//h = sock_open("unix://@foobar");
 	if(h == null) begin
 		$error("Aww shucks couldn't connect");
 		sock_shutdown();

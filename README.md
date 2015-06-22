@@ -10,7 +10,7 @@ The windows branch of this code is the last time I tested it on windows...
 Todo
 ----
 
-* Add support for unix domain sockets / named pipes
+* Add support for windows named pipes
 
 
 Quick Start
@@ -37,3 +37,4 @@ Finally, spin up vsim (/opt/altera/15.0/modelsim_ase/bin/vsim in my-case), and r
 
 If it all worked, it will say "Howdy Partner!"
 
+To experiment with unix domain sockets, comment out line 58 of sock.sv and comment in line 59. Then use with ```python test/unix_server.py```.

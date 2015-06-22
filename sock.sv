@@ -1,6 +1,6 @@
 module sock();
 
-// Tested on modelsim altera 14.0 for windows and linux
+// Tested on modelsim altera starter edition for windows and linux
 //
 // Example compile command:
 //    vlog sock.sv sock.c

@@ -33,7 +33,7 @@ import "DPI-C" function void sock_close(input chandle handle);
 // Write a line to handle - automatically adds new line
 // (note does not add carridge return)
 //   handle - Handle returned from sock_open
-//   data - String to write (note max size is 1k currently)
+//   data - String to write (note max size is 1MB currently)
 // Returns 1 on success, 0 on error
 import "DPI-C" function int sock_writeln(input chandle handle, input string data);
 
@@ -41,7 +41,7 @@ import "DPI-C" function int sock_writeln(input chandle handle, input string data
 // (note does not remove carridge return if present)
 //   handle - Handle returned from sock_open
 // Returns the line, or empty string on error / EOF
-// Note: we have a 1k buffer, lines longer than this will be split up
+// Note: we have a 1MB buffer, lines longer than this will be split up
 import "DPI-C" function string sock_readln(input chandle handle);
 
 

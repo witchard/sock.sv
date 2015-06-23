@@ -1,15 +1,15 @@
-module sock();
+package sock;
 
-// Tested on modelsim altera starter edition for windows and linux
+// Tested on modelsim altera starter edition for linux
 //
 // Example compile command:
-//    vlog sock.sv sock.c
+//    vlog example.sv sock.sv sock.c
 //
 // Example run command (windows):
-//    vsim sock -ldflags -lws2_32
+//    vsim example -ldflags -lws2_32
 //
 // Example run command (linux):
-//    vsim sock
+//    vsim example
 
 // Init the module - this should be called once at startup
 // Returns 1 for OK, 0 for error
@@ -44,38 +44,11 @@ import "DPI-C" function int sock_writeln(input chandle handle, input string data
 // Note: we have a 1MB buffer, lines longer than this will be split up
 import "DPI-C" function string sock_readln(input chandle handle);
 
+// Write a line to handle and then read response
+function string sock_w_r(input chandle handle, input string data);
+   if(sock_writeln(handle, data) == 1)
+     return sock_readln(handle);
+   return "";
+endfunction
 
-
-// Example usage - sends / receives some data to/from localhost port 1234
-initial begin
-	chandle h;
-	
-	// Init
-	if(sock_init() < 0) begin
-		$error("Aww shucks couldn't init the library");
-		$stop();
-	end 
-
-	// Connect
-	h = sock_open("tcp://localhost:1234");
-	//h = sock_open("unix://@foobar");
-	if(h == null) begin
-		$error("Aww shucks couldn't connect");
-		sock_shutdown();
-		$stop();
-	end 
-
-	// Send / receive
-	if(!sock_writeln(h, "Howdy partner!")) begin
-		$error("Darn it the write failed");
-		sock_shutdown();
-		$stop();
-	end
-	$display(sock_readln(h));
-
-	// Done
-	sock_close(h);
-	sock_shutdown();
-end
-
-endmodule
+endpackage

@@ -5,7 +5,7 @@ A simple socket library for system verilog. Using the system verilog DPI, allows
 
 See sock.sv for the function definitions and example usage.
 
-The windows branch of this code is the last time I tested it on windows...
+The windows branch of this code is the last time I tested it on windows... If you intend to use windows please let me know if master works still!
 
 Todo
 ----
@@ -31,8 +31,8 @@ Then start up the test server - ```python test/tcp_server.py```.
 Finally, spin up vsim (/opt/altera/15.0/modelsim_ase/bin/vsim in my-case), and run the following in the vsim shell to test it out:
 
 * ```vlib work```
-* ```vlog sock.sv sock.c```
-* ```vsim sock```
+* ```vlog example.sv sock.sv sock.c```
+* ```vsim example```
 * ```run -all```
 
 If it all worked, it will say "Howdy Partner!"

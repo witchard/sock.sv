@@ -37,6 +37,10 @@ struct handle {
     size_t eoff; // Read end
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int sock_init() {
 #ifdef _WIN32
     // Init the windows sockets
@@ -55,7 +59,7 @@ void sock_shutdown() {
 }
 
 struct handle* init_struct(SOCKET sock) {
-    struct handle* h = malloc(sizeof(struct handle));
+    struct handle* h = (struct handle*) malloc(sizeof(struct handle));
     if(h) {
         h->sock = sock;
         h->roff = 0;
@@ -162,7 +166,7 @@ void sock_close(void* handle) {
     if(!handle)
         return;
     
-    struct handle* h = handle;
+    struct handle* h = (struct handle*) handle;
     closesocket(h->sock);
     free(h);
 }
@@ -174,7 +178,7 @@ int sock_writeln(void* handle, const char* data) {
     size_t len = strlen(data);
     if(len >= BUFFER_SIZE)
         return 0; // String too big
-    struct handle* h = handle;
+    struct handle* h = (struct handle*) handle;
 
     // Create output string (replace null termination with newline)
     memcpy(h->wbuf, data, len);
@@ -195,7 +199,7 @@ const char* sock_readln(void* handle) {
     // Validate input
     if(!handle) 
         return 0;    
-    struct handle* h = handle;
+    struct handle* h = (struct handle*) handle;
 
     // Prepare read - move down any spare data from last time
     if( h->roff > h->eoff ) {
@@ -207,11 +211,11 @@ const char* sock_readln(void* handle) {
 
     // Read
     int ret = 0;
-    char* end = memchr(h->rbuf, '\n', h->roff);
+    char* end = (char*) memchr((char*)(h->rbuf), '\n', h->roff);
     while(ret != -1 && h->roff != BUFFER_SIZE && end == NULL) {
         ret = recv(h->sock, h->rbuf + h->roff, BUFFER_SIZE - h->roff, 0);
         if( ret != -1 )
-            end = memchr(h->rbuf + h->roff, '\n', ret); // Search for \n
+            end = (char*) memchr((char*)(h->rbuf + h->roff), '\n', ret); // Search for \n
         h->roff += ret;
     }
 
@@ -228,4 +232,8 @@ const char* sock_readln(void* handle) {
 
     return h->rbuf;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
